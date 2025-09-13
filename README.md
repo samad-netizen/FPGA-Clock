@@ -1,59 +1,61 @@
-# Digital Clock on Nexys 4 DDR FPGA  
+# ⏰ Digital Clock & Stopwatch on Nexys 4 DDR FPGA  
 
-## 🕒 Overview  
-This project implements a **24-hour digital clock** on the **Nexys 4 DDR FPGA board** using **Verilog HDL**.  
-The clock displays **hours, minutes, and seconds (HH:MM:SS)** on the board’s **7-segment display** using multiplexing.  
+## 📝 Overview  
+This project implements a **timekeeping system** on the **Nexys 4 DDR FPGA board** using **Verilog HDL**.  
+It features two modes:  
+
+1. **Digital Clock** – Displays real-time hours, minutes, and seconds (24-hour format).  
+2. **Stopwatch with Timer Feature** – Operates as a stopwatch, automatically stopping at a preset time (10 minutes 16 seconds) and lighting up an LED indicator.  
+
+The design uses the onboard **100 MHz clock**, a clock divider, and multiplexed **7-segment displays** for output.  
 
 ---
 
 ## ✨ Features  
-- ✅ Counts **seconds (00–59)**  
-- ✅ Counts **minutes (00–59)**  
-- ✅ Counts **hours (00–23)**  
-- ✅ Uses a **1 Hz clock** derived from the FPGA’s 100 MHz oscillator  
-- ✅ Multiplexed **7-segment display driver**  
-- ✅ Supports **asynchronous reset**  
+
+### 🕒 Digital Clock  
+- Counts **HH:MM:SS** in 24-hour format.  
+- Seconds and minutes roll over at 60, hours roll over at 24.  
+- Uses an **asynchronous reset** to restart from `00:00:00`.  
+- Displays time across **6 digits** on the 7-segment display.  
+
+### ⏱ Stopwatch (Timer Mode)  
+- Stopwatch runs with `timer_switch` enabled.  
+- Automatically **stops at 10:16 (MM:SS)**.  
+- **LED (`timer_led`) lights up** when target is reached.  
+- Shares the same 7-segment multiplexing display logic.  
 
 ---
-
 
 ---
 
 ## ⚡ Inputs & Outputs  
 
 ### Inputs  
-- `clk` : 100 MHz system clock from FPGA  
-- `rst` : Active-low reset  
+- `clk` → 100 MHz system clock  
+- `rst` → Active-low reset  
+- `timer_switch` → Mode select (0 = Clock, 1 = Stopwatch/Timer)  
 
 ### Outputs  
-- `sec_ones [3:0]` → Seconds ones digit  
-- `sec_tens [2:0]` → Seconds tens digit  
-- `min_ones [3:0]` → Minutes ones digit  
-- `min_tens [2:0]` → Minutes tens digit  
-- `hr_ones [3:0]` → Hours ones digit  
-- `hr_tens [1:0]` → Hours tens digit  
 - `sevseg [6:0]` → 7-segment segment driver (active low)  
-- `an [7:0]` → 7-segment display enable lines  
+- `an [7:0]` → Anode signals for digit multiplexing  
+- `timer_led` → Lights up at 10:16 in stopwatch mode  
 
 ---
 
 ## ⚙️ Working Principle  
 
 1. **Clock Divider**  
-   - The FPGA clock runs at 100 MHz.  
-   - A 27-bit counter divides it down to generate a **1 Hz clock**.  
-   - This slow clock drives the time counters.  
+   - A 27-bit counter reduces the 100 MHz input clock to 1 Hz.  
+   - This drives the time counters.  
 
 2. **Counters**  
-   - **Seconds**: `00–59`  
-   - **Minutes**: `00–59`  
-   - **Hours**: `00–23`, then rollover  
-   - Each counter cascades into the next.  
+   - Digital Clock → increments HH:MM:SS, rolls over correctly.  
+   - Stopwatch → increments MM:SS until 10:16, then freezes.  
 
 3. **Display Logic**  
-   - BCD values converted to 7-segment patterns.  
-   - Multiplexing logic (`display_count`) cycles through the digits rapidly.  
-   - Persistence of vision makes all digits appear simultaneously.  
+   - Converts each BCD digit to **7-segment encoding**.  
+   - Uses digit multiplexing for smooth display.  
 
 ---
 
@@ -77,25 +79,35 @@ The clock displays **hours, minutes, and seconds (HH:MM:SS)** on the board’s *
 ## 🚀 How to Run  
 
 1. Open **Vivado** and create a new project.  
-2. Add `digitalclock.v` as the source file.  
-3. Add and edit the **constraints file (`.xdc`)** to map:  
-   - Clock pin (100 MHz oscillator)  
+2. Add the Verilog source files (`top_module.v`, `clock_divider.v`, etc.).  
+3. Add the **constraints file (`constraints.xdc`)** for Nexys 4 DDR:  
+   - 100 MHz clock pin  
    - Reset push button  
-   - 7-segment display pins (`an`, `sevseg`)  
-4. Generate the bitstream and program the Nexys 4 DDR FPGA.  
-5. Reset the board → Clock starts from `00:00:00`.  
+   - Switch for `timer_switch`  
+   - LED pin for `timer_led`  
+   - Anode + segment pins for 7-segment display  
+4. Run: **Synthesis → Implementation → Generate Bitstream**.  
+5. Program the FPGA.  
+6. Use switches to toggle between **Clock** and **Stopwatch modes**.  
 
 ---
 
 ## ⚠️ Limitations  
-- Starts always from `00:00:00` (no manual time setting).  
-- Works in **24-hour format** only.  
-- Accuracy depends on clock divider (slight drift possible).  
+- Digital clock always starts at `00:00:00` after reset.  
+- Stopwatch timer target is **hardcoded at 10:16**.  
+- No manual time-setting feature.  
 
 ---
 
 ## 🔮 Future Improvements  
-- Add **AM/PM mode** for 12-hour format.  
-- Implement **push button time adjustment**.  
-- Extend to include **date & day counters**.  
-- Use PLL/MMCM for more **accurate clocking**.  
+- Add **time adjustment** for clock mode.  
+- Stopwatch **start/stop/reset push buttons**.  
+- Configurable **timer preset values**.  
+- Add **date/day tracking**.  
+
+---
+
+.  
+
+---
+  
